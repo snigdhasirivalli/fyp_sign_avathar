@@ -21,3 +21,11 @@ Thumbs.db
 *.mp4
 *.avi
 *.mov
+
+# Auto-downloaded MediaPipe models
+_mp_models/
+*.task
+*.tflite
+
+# Generated outputs
+generalized_test_results.json

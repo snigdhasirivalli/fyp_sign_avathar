@@ -1,13 +1,11 @@
 #!/usr/bin/env python
 # coding: utf-8
 """
-Test Runner for Generalized HamNoSys Modules:
-- Handshape_Model.py
-- fing_locations_d.py
-- movement1_prava.py
+Test Runner for all Generalized HamNoSys Modules.
 
-Scans for available videos in the directory and the parent Integration folder,
-runs all 3 generalized modules, and displays comparison outputs.
+Runs every generalized module on the videos found in this directory or the
+parent Integration folder and writes the per-video dominant labels to
+generalized_test_results.json.
 """
 
 import os
@@ -17,14 +15,36 @@ import json
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 INTEGRATION_DIR = os.path.join(os.path.dirname(THIS_DIR), "Integration")
 
-# Import the 3 generalized modules locally
 sys.path.insert(0, THIS_DIR)
+
 from Handshape_Model import run_handshape_module
 from fing_locations_d import run_finger_location_module
 from movement1_prava import run_movement1_module
+from ori_model2 import run_orientation_module
+from upper_body_locations_video import run_upper_body_location_module
+from Head_and_face_location import run_head_face_location_module
+from hand_location_video_P import run_hand_location_module
+from contact_types_e import run_contact_type_module
+from Arm_and_Space_positions import run_arm_space_module
+from Movement_2 import run_movement2_module
+
+
+MODULES = [
+    ("handshape", run_handshape_module),
+    ("finger_location", run_finger_location_module),
+    ("movement1", run_movement1_module),
+    ("orientation", run_orientation_module),
+    ("upper_body", run_upper_body_location_module),
+    ("head_face", run_head_face_location_module),
+    ("hand_location", run_hand_location_module),
+    ("contact", run_contact_type_module),
+    ("arm_space", run_arm_space_module),
+    ("movement2", run_movement2_module),
+]
+
 
 def find_video_files():
-    """Find mp4 videos in either this folder or Integration folder."""
+    """Find mp4 videos in either this folder or the Integration folder."""
     candidates = []
     for d in [THIS_DIR, INTEGRATION_DIR]:
         if os.path.exists(d):
@@ -34,6 +54,15 @@ def find_video_files():
                     if full_p not in candidates:
                         candidates.append(full_p)
     return candidates
+
+
+def summarize(output):
+    if isinstance(output, dict):
+        final = output.get("final")
+        frames = len(output.get("per_frame", []))
+        return final, frames
+    return output, 0
+
 
 def main():
     videos = find_video_files()
@@ -52,38 +81,18 @@ def main():
     for video_path in videos:
         vname = os.path.basename(video_path)
         print(f"\n[PROCESSING] {vname} ...")
+        row = {"video": vname}
 
-        try:
-            handshape_out = run_handshape_module(video_path)
-            handshape_label = handshape_out.get("final") if isinstance(handshape_out, dict) else str(handshape_out)
-            handshape_frames = len(handshape_out.get("per_frame", [])) if isinstance(handshape_out, dict) else 0
-        except Exception as e:
-            handshape_label = f"ERROR: {e}"
-            handshape_frames = 0
+        for name, fn in MODULES:
+            try:
+                label, frames = summarize(fn(video_path))
+                row[name] = label
+                print(f"  -> {name:16s} (Frames: {frames}): {label}")
+            except Exception as e:
+                row[name] = f"ERROR: {e}"
+                print(f"  -> {name:16s} ERROR: {e}")
 
-        try:
-            finger_out = run_finger_location_module(video_path)
-            finger_label = finger_out.get("final") if isinstance(finger_out, dict) else str(finger_out)
-            finger_frames = len(finger_out.get("per_frame", [])) if isinstance(finger_out, dict) else 0
-        except Exception as e:
-            finger_label = f"ERROR: {e}"
-            finger_frames = 0
-
-        try:
-            movement_out = run_movement1_module(video_path)
-        except Exception as e:
-            movement_out = f"ERROR: {e}"
-
-        print(f"  -> Handshape (Frames: {handshape_frames}): {handshape_label}")
-        print(f"  -> Finger Location (Frames: {finger_frames}): {finger_label}")
-        print(f"  -> Movement 1: {movement_out}")
-
-        results.append({
-            "video": vname,
-            "handshape": handshape_label,
-            "finger_location": finger_label,
-            "movement1": movement_out
-        })
+        results.append(row)
 
     out_file = os.path.join(THIS_DIR, "generalized_test_results.json")
     with open(out_file, "w", encoding="utf-8") as f:
@@ -92,6 +101,7 @@ def main():
     print("\n" + "=" * 70)
     print(f"Testing complete! Results saved to: {out_file}")
     print("=" * 70)
+
 
 if __name__ == "__main__":
     main()

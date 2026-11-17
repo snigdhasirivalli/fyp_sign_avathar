@@ -45,6 +45,7 @@ from contact_types_e            import run_contact_type_module
 from Arm_and_Space_positions    import run_arm_space_module
 from movement1_prava            import run_movement1_module
 from Movement_2                 import run_movement2_module
+from two_hands                  import run_two_hands_module
 
 # ── Output folder ──
 OUTPUT_DIR = os.path.join(THIS_DIR, "outputt_2")
@@ -67,6 +68,9 @@ def extract_labels(module_output):
                     continue
                 if isinstance(item, tuple):
                     cleaned.extend([str(x) for x in item if x is not None])
+                elif isinstance(item, dict):
+                    cleaned.extend(v for v in item.values()
+                                   if isinstance(v, str) and v.startswith("ham"))
                 else:
                     cleaned.append(str(item))
             return cleaned
@@ -197,6 +201,10 @@ def count_tokens(output, video_frames=None):
                     else:
                         val = _clean(str(x))
                         flat.append("none" if val.lower() == "none" else val)
+            elif isinstance(item, dict):
+                tok = [v for v in item.values()
+                       if isinstance(v, str) and v.startswith("ham")]
+                flat.extend(tok if tok else ["none"])
             else:
                 val = _clean(str(item))
                 flat.append("none" if val.lower() == "none" else val)
@@ -281,11 +289,12 @@ for video_name in VIDEOS:
     arm_space       = run_arm_space_module(video_path)
     movement1       = run_movement1_module(video_path)
     movement2       = run_movement2_module(video_path)
+    two_hands       = run_two_hands_module(video_path)
 
     hamnosys_code = combine_hamnosys(
         handshape, orientation, upper_body, head_face,
         hand_location, finger_location, contact, arm_space,
-        movement1, movement2
+        movement1, movement2, two_hands
     )
 
     # ── Compute per-module token counts ──
@@ -300,6 +309,7 @@ for video_name in VIDEOS:
         ("Contact Type",    contact),
         ("Movement 1",      movement1),
         ("Movement 2",      movement2),
+        ("Two Hands",       two_hands),
     ]
     token_counts = {name: count_tokens(out, video_frames=video_total_frames) for name, out in modules_info}
 
@@ -315,6 +325,7 @@ for video_name in VIDEOS:
     print(f"Contact Type    : {format_verbose_output(contact)}")
     print(f"Movement 1      : {movement1 if isinstance(movement1, str) else format_verbose_output(movement1)}")
     print(f"Movement 2      : {format_verbose_output(movement2)}")
+    print(f"Two Hands       : {format_verbose_output(two_hands)}")
     print(f"\n========== FINAL HAMNOSYS ==========")
     print(hamnosys_code)
 
@@ -339,6 +350,7 @@ for video_name in VIDEOS:
         f.write(f"Contact Type    : {format_verbose_output(contact)}\n")
         f.write(f"Movement 1      : {movement1 if isinstance(movement1, str) else format_verbose_output(movement1)}\n")
         f.write(f"Movement 2      : {format_verbose_output(movement2)}\n")
+        f.write(f"Two Hands       : {format_verbose_output(two_hands)}\n")
 
         f.write("\n========== FINAL HAMNOSYS ==========\n")
         f.write(hamnosys_code + "\n")

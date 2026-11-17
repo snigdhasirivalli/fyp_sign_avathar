@@ -52,6 +52,7 @@ from contact_types_e import run_contact_type_module
 from Arm_and_Space_positions import run_arm_space_module
 from movement1_prava import run_movement1_module
 from Movement_2 import run_movement2_module
+from two_hands import run_two_hands_module
 
 # =============================
 # VIDEO PATH (local)
@@ -85,6 +86,7 @@ contact         = run_contact_type_module(video_path)
 arm_space       = run_arm_space_module(video_path)
 movement1       = run_movement1_module(video_path)
 movement2       = run_movement2_module(video_path)
+two_hands       = run_two_hands_module(video_path)
 
 # =============================
 # EXTRACT LABELS
@@ -99,6 +101,9 @@ def extract_labels(module_output):
                     continue
                 if isinstance(item, tuple):
                     cleaned.extend([str(x) for x in item if x is not None])
+                elif isinstance(item, dict):
+                    cleaned.extend(v for v in item.values()
+                                   if isinstance(v, str) and v.startswith("ham"))
                 else:
                     cleaned.append(str(item))
             return cleaned
@@ -135,11 +140,12 @@ def generate_hamnosys():
     print("Contact Type    :", contact)
     print("Movement 1      :", movement1)
     print("Movement 2      :", movement2)
+    print("Two Hands       :", two_hands)
 
     hamnosys_code = combine_hamnosys(
         handshape, orientation, upper_body, head_face,
         hand_location, finger_location, contact, arm_space,
-        movement1, movement2
+        movement1, movement2, two_hands
     )
 
     print("\n========== FINAL HAMNOSYS ==========")
@@ -194,6 +200,15 @@ arm_frames          = get_frames(arm_space, total_frames)
 movement1_frames    = get_frames(movement1, total_frames)
 movement2_frames    = get_frames(movement2, total_frames)
 
+raw_two_frames = two_hands.get("per_frame", []) if isinstance(two_hands, dict) else []
+two_hands_frames = [
+    " ".join(v for v in f.values() if isinstance(v, str) and v.startswith("ham"))
+    if isinstance(f, dict) else safe(f)
+    for f in raw_two_frames
+]
+if not two_hands_frames:
+    two_hands_frames = get_frames(two_hands, total_frames)
+
 frame_id = 0
 cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
 
@@ -222,6 +237,7 @@ while cap.isOpened():
         safe_get(movement1_frames, frame_id),
         safe_get(movement2_frames, frame_id),
     ])
+    two_hands_label = safe_get(two_hands_frames, frame_id)
 
     # Draw labels
     font = cv2.FONT_HERSHEY_SIMPLEX
@@ -229,6 +245,7 @@ while cap.isOpened():
     cv2.putText(frame, f"Orientation: {orientation_label}",(30, 70),  font, 0.6, (0,255,0), 2)
     cv2.putText(frame, f"Location: {location_label}",      (30, 110), font, 0.5, (0,255,255), 2)
     cv2.putText(frame, f"Movement: {movement_label}",      (30, 150), font, 0.6, (255,255,0), 2)
+    cv2.putText(frame, f"TwoHands: {two_hands_label}",     (30, 190), font, 0.6, (255,0,255), 2)
 
     out.write(frame)
     frame_id += 1

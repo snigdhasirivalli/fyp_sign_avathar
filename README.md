@@ -65,6 +65,12 @@ This repository contains the generalized, rotation-invariant, and scale-invarian
 * **Hand Identity Gate:** A tracked hand that jumps more than ~0.9 shoulder widths is treated as the other hand, so the resting hand cannot splice a fake loop into the trajectory.
 * **FPS-Aware Oscillation:** `hamwavy` / `hamzigzag` / `hamswinging` counting uses hysteresis in shoulder-widths per second.
 
+### 11. Two-Handed Relationships (`two_hands.py`)
+* **Symmetry & Sequencing:** Wrist positions, finger-extension counts and palm proximity distinguish `hamsymmlr` / `hamsymmr` / `hamcircular` from `hamparallel`, `hamsequential` and `hamseqatloc`.
+* **Passive Hand Description:** The non-dominant hand is described with the `hamsec*` bracket/shape family (`hamsecshape0`–`hamsecshape6`) plus secondary-location qualifiers (`hamsecloc_*`).
+* **Hold & Role Detection:** Frame-history motion variance yields `hamholdsecond`, while disappearance of one hand after both were active yields `hamsimultaneous`.
+* **Pipeline Injection:** `inject_two_hands(seq, result)` inserts the detected tokens at HamNoSys-grammar positions (symmetry first, passive shape after body location, hold last).
+
 ---
 
 ## 📊 Benchmark & Accuracy Validation
@@ -118,6 +124,7 @@ MediaPipe model files are downloaded automatically into `_mp_models/` on first r
 ├── contact_types_e.py                      # Generalized Contact-Type Module
 ├── Arm_and_Space_positions.py              # Generalized Arm & Space Module
 ├── Movement_2.py                           # Generalized Circular/Oscillation Module
+├── two_hands.py                            # Two-Handed Relationship Module
 ├── run_test_batch.py                       # Batch evaluation harness (all modules)
 ├── mediapipe_solutions_compat.py          # Compatibility layer for modern MediaPipe
 ├── CHANGES_REPORT.md                       # Comprehensive engineering documentation

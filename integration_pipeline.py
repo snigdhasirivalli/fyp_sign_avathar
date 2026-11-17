@@ -76,6 +76,7 @@ from Arm_and_Space_positions import run_arm_space_module
 
 from movement1_prava import run_movement1_module
 from Movement_2 import run_movement2_module
+from two_hands import run_two_hands_module
 
 
 # In[ ]:
@@ -118,6 +119,8 @@ arm_space = run_arm_space_module(video_path)
 movement1 = run_movement1_module(video_path)
 movement2 = run_movement2_module(video_path)
 
+two_hands = run_two_hands_module(video_path)
+
 
 # In[ ]:
 
@@ -142,6 +145,9 @@ def extract_labels(module_output):
 
                 if isinstance(item, tuple):
                     cleaned.extend([str(x) for x in item if x is not None])
+                elif isinstance(item, dict):
+                    cleaned.extend(v for v in item.values()
+                                   if isinstance(v, str) and v.startswith("ham"))
                 else:
                     cleaned.append(str(item))
 
@@ -204,6 +210,7 @@ def generate_hamnosys(video_path):
     print("Contact Type    :", contact)
     print("Movement 1      :", movement1)
     print("Movement 2      :", movement2)
+    print("Two Hands       :", two_hands)
 
 
     hamnosys_code = combine_hamnosys(
@@ -216,7 +223,8 @@ def generate_hamnosys(video_path):
         contact,
         arm_space,
         movement1,
-        movement2
+        movement2,
+        two_hands
     )
 
     print("\n========== FINAL HAMNOSYS ==========")

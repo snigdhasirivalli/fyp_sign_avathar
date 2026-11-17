@@ -27,6 +27,7 @@ from hand_location_video_P import run_hand_location_module
 from contact_types_e import run_contact_type_module
 from Arm_and_Space_positions import run_arm_space_module
 from Movement_2 import run_movement2_module
+from two_hands import run_two_hands_module
 
 
 MODULES = [
@@ -40,6 +41,7 @@ MODULES = [
     ("contact", run_contact_type_module),
     ("arm_space", run_arm_space_module),
     ("movement2", run_movement2_module),
+    ("two_hands", run_two_hands_module),
 ]
 
 
